@@ -1,36 +1,22 @@
 function processString(input) {
-    const removeUnwantedBBCode = (str) => {
-        const spoilerTags = /(\[spoiler\]|\[\/spoiler\])/gi;
-        const allBBCodeTags = /\[\/?(\w+)[^\]]*\]/gi;
-        return str.replace(allBBCodeTags, (match) => spoilerTags.test(match) ? match : '');
-    };
+    // Remove unwanted BBCode tags
+    let bbCodeRemoved = input.replace(/\[(?!spoiler|\/spoiler|title|\/title)[^[\]]*\]/g, '');
 
-    const fixMarkdownTables = (str) => {
-        const tableRow = /\|([^\n]*\|)+/g;
-        return str.replace(tableRow, (match) => {
-            const cells = match.split('|').filter(cell => cell.trim() !== '');
-            return `| ${cells.join(' | ')} |`;
-        });
-    };
+    // Remove bold/italics from Markdown headings and table headings
+    let headingsFixed = bbCodeRemoved.replace(/^(?:(\*{1,2}))(#+)(\s*)([^*]+)(?:(\*{1,2}))(.*)$/gm, '$2$3$4$6');
+    headingsFixed = headingsFixed.replace(/^(#+)(\s*[^*]*)((\*{1,2})([^*]+)(\*{1,2}))(.*)$/gm, '$1$2$5$7');
 
-    const removeEmptyHeadings = (str) => {
-        const emptyHeading = /^[\s]*#+[\s]*$/gm;
-        return str.replace(emptyHeading, '');
-    };
+    let tableHeadingsFixed = headingsFixed.replace(/^\|(.*)\|$/gm, (_, row) => {
+        return '|' + row.replace(/(\*{1,2}([^*]+)\*{1,2})/g, '$2') + '|';
+    });
 
-    const removeRedundantBold = (str) => {
-        const boldInHeading = /^(#+[\s]*)(\*\*)/gm;
-        const boldInTableHeading = /(\|[^\n]*?\|[\s]*)(\*\*)/g;
-        return str.replace(boldInHeading, '$1').replace(boldInTableHeading, '$1');
-    };
+    // Normalize Markdown table formatting
+    let tableFixed = tableHeadingsFixed.replace(/^\|(.*)\|$/gm, (_, row) => {
+        let cells = row.split('|').map(cell => cell.trim());
+        return '| ' + cells.join(' | ') + ' |';
+    });
 
-    let processed = input;
-    processed = removeUnwantedBBCode(processed);
-    processed = fixMarkdownTables(processed);
-    processed = removeEmptyHeadings(processed);
-    processed = removeRedundantBold(processed);
-
-    return processed;
+    return tableFixed;
 }
 
 async function copyTextToClipboard(text) {
