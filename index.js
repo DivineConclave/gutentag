@@ -2,8 +2,11 @@ function processString(input) {
     // Remove unwanted BBCode tags
     let bbCodeRemoved = input.replace(/\[(?!spoiler|\/spoiler|title|\/title)[^[\]]*\]/g, '');
 
+    // Remove cosmetic HTML tags
+    let htmlTagsRemoved = bbCodeRemoved.replaceAll(/<\/?(h1|h2|h3|center|h1style|span|div)(?:\s*[^>]*)?>/gi, '');
+
     // Remove bold/italics from Markdown headings and table headings
-    let headingsFixed = bbCodeRemoved.replace(/^(?:(\*{1,2}))(#+)(\s*)([^*]+)(?:(\*{1,2}))(.*)$/gm, '$2$3$4$6');
+    let headingsFixed = htmlTagsRemoved.replace(/^(?:(\*{1,2}))(#+)(\s*)([^*]+)(?:(\*{1,2}))(.*)$/gm, '$2$3$4$6');
     headingsFixed = headingsFixed.replace(/^(#+)(\s*[^*]*)((\*{1,2})([^*]+)(\*{1,2}))(.*)$/gm, '$1$2$5$7');
 
     let tableHeadingsFixed = headingsFixed.replace(/^\|(.*)\|$/gm, (_, row) => {
